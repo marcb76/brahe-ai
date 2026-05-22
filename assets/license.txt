@@ -1,0 +1,5 @@
+Proprietary Software License Agreement
+
+Copyright © 2026 Marc Bonet. All rights reserved.
+
+This software and its associated documentation are proprietary products of Marc Bonet and are protected under applicable intellectual property laws of the United States and Puerto Rico. By installing, copying, or otherwise using this software, you agree to be bound by the terms of this license.

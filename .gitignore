@@ -1,0 +1,39 @@
+# Environment variables, secrets & Tokens
+.env
+credentials.json
+token.json
+
+# Runtime directories
+log/
+tmp/
+
+# Python specific
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# OS / IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.history/
+*.bak
+*.tmp
+*.log
