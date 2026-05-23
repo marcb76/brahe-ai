@@ -57,6 +57,8 @@ token.json
 # Runtime directories
 log/
 tmp/
+processing/
+processed/
 
 # Python specific
 venv/
@@ -117,7 +119,9 @@ echo "🛠 Setting up directories..."
 mkdir -p assets     # For static assets (e.g., license, documentation)
 mkdir -p log        # For logging automated executions
 mkdir -p tmp        # For temporary files (e.g., downloaded spreadsheets)
-mkdir -p services    # For modular service scripts (e.g., google_drive.py, gmail.py, gemini_client.py)
+mkdir -p processing # For files currently being processed
+mkdir -p processed  # For files that have been processed and are ready for output
+mkdir -p services   # For modular service scripts (e.g., google_drive.py, gmail.py, gemini_client.py)
 
 # 5. Create the main agent script (brahe-ai.py)
 echo "📝 Creating brahe-ai.py..."
@@ -173,16 +177,36 @@ touch services/gemini_service.py
 # 8. Create .env file template
 echo "🔐 Creating .env file template..."
 cat << 'EOF' > .env
-# Environment variables for brahe-ai
+# Environment configuration for brahe-ai
 # Local Directories Configuration
-DIR_TEMP_FOLDER="tmp"
+LOG_FOLDER="log"
+TEMP_FOLDER="tmp"
+PROCESSING_FOLDER="processing"
+PROCESSED_FOLDER="processed"
 
-# Google Drive Configuration (IDs de las carpetas en tu Drive)
-DRIVE_INPUT_FOLDER_ID="your_input_folder_id_here"
-DRIVE_OUTPUT_FOLDER_ID="your_output_folder_id_here"
+# Google Drive Configuration
+GOOGLE_CREDENTIALS_FILE="your_credentials_file.json_here"
+GOOGLE_DRIVE_RULES_FOLDER_ID="your_rules_folder_id_here"
+GOOGLE_DRIVE_INPUT_FOLDER_ID="your_input_folder_id_here"
+GOOGLE_DRIVE_OUTPUT_FOLDER_ID="your_output_folder_id_here"
 
 # Gemini API Configuration
+GEMINI_MODEL="gemini-2.0-flash" 
 GEMINI_API_KEY="your_gemini_api_key_here"
+
+# Input file names
+GENERAL_RULES_FILE_NAME="brahe-ai-general-rules.xlsx"
+DEPARTMENT_RULES_FILE_NAME_PATTERN="brahe-ai-department-{}-rules.xlsx"  # {} will be replaced by department name
+RAW_DATA_REPORT_INPUT_FILE_NAME="your_excel_file_with_raw_data.xlsx"
+
+# Processing and output folder/file name pattern
+PROCESSING_FILE_NAME_PATTERN="brahe-ai-processing-{}-{}.xlsx"  # {}-{} will be replaced with raw data report file name and timestamp
+PROCESSED_FILE_NAME_PATTERN="brahe-ai-processed-{}-{}.xlsx"    # {}-{} will be replaced with raw data report file name and timestamp
+OUTPUT_FILE_NAME_PATTERN="brahe-ai-output-{}-{}.xlsx"          # {}-{} will be replaced with raw data report file name and timestamp
+
+# Notifications Configuration
+ON_ERROR_NOTIFICATION_EMAILS="your_email@example.com"   # Emails (comma separated) to notify in case of errors during processing
+ON_SUCCESS_NOTIFICATION_EMAILS="your_email@example.com" # Emails (comma separated) to notify in case of successful processing
 EOF
 
 echo "✅ All done!"

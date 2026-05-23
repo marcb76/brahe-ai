@@ -6,6 +6,8 @@ token.json
 # Runtime directories
 log/
 tmp/
+processing/
+processed/
 
 # Python specific
 venv/
