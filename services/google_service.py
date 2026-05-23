@@ -14,7 +14,7 @@ from googleapiclient.http import MediaIoBaseDownload
 
 # Required scopes for Google Drive and Gmail APIs
 SCOPES = [
-    'https://www.googleapis.com/auth/drive.readonly',
+    'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/gmail.send'
 ]
 
@@ -71,7 +71,7 @@ class GoogleService:
             - file_name: Name of the file to search for.
             - dest_folder: Local folder to save the downloaded file.
         Returns: Local path of the downloaded file.
-        Raises: FileNotFoundError if the file is not found, HttpError for API issues.
+        Raises: FileNotFoundError if the file is not found, RuntimeError for API issues.
         """
         try:
             # Query to search for the file by name, not in trash, and belonging to the parent folder
@@ -83,7 +83,7 @@ class GoogleService:
             ).execute()
             items = results.get('files', [])
             if not items:
-                raise FileNotFoundError(f"⚠️ File '{file_name}' not found in the specified Drive folder.")
+                raise FileNotFoundError(f"⚠️ File '{file_name}' not found in the specified Drive folder '{folder_id}'.")
 
             # Binary download flow for the first matching file (assuming unique names within the folder)                
             file_id = items[0]['id']
@@ -102,6 +102,61 @@ class GoogleService:
 
         except HttpError as error:
             raise HttpError(f"❌ Google Drive API error while downloading '{file_name}': {error}")
+
+
+
+
+    def upload_file(self, source_file: str, folder_id: str, file_name: str):
+        """
+        Upload a local file to a specified Drive folder with a given name.
+        Parameters:
+            - source_file: Local path of the file to upload.
+            - folder_id: ID of the Drive folder to upload to.
+            - file_name: Desired name of the file in Drive after upload.
+        Returns: The uploaded file's metadata from Drive (including its ID and name).
+        Raises: FileNotFoundError if the source file is missing, RuntimeError for API issues.
+        """
+        try:
+            if not os.path.exists(source_file):
+                raise FileNotFoundError(f"❌ The file '{source_file}' does not exist. Please check the path and try again.")
+            file_metadata = {
+                'name': file_name,
+                'parents': [folder_id]
+            }
+            media = MediaIoBaseDownload(io.BytesIO(open(source_file, 'rb').read()), mimetype='application/octet-stream')
+            uploaded_file = self.drive_client.files().create(body=file_metadata, media_body=media, fields='id, name').execute()
+            return uploaded_file
+        except HttpError as error:
+            raise RuntimeError(f"❌ Google Drive API error while uploading '{file_name}': {error}")
+    
+    
+    
+    
+    def delete_file_by_name(self, folder_id: str, file_name: str):
+        """
+        Locate a file by name within a Drive folder and delete it.
+        Parameters:
+            - folder_id: ID of the Drive folder to search within.
+            - file_name: Name of the file to search for and delete.
+        Raises: FileNotFoundError if the file is not found, HttpError for API issues
+        """
+        try:
+            # Query to search for the file by name, not in trash, and belonging to the parent folder
+            query = f"'{folder_id}' in parents and name = '{file_name}' and trashed = false"
+            results = self.drive_client.files().list(
+                q=query, 
+                spaces='drive', 
+                fields='files(id, name)'
+            ).execute()
+            items = results.get('files', [])
+            if not items:
+                raise FileNotFoundError(f"⚠️ File '{file_name}' not found in the specified Drive folder '{folder_id}' for deletion.")
+            
+            # Delete the first matching file (assuming unique names within the folder)
+            file_id = items[0]['id']
+            self.drive_client.files().delete(fileId=file_id).execute()
+        except HttpError as error:
+            raise RuntimeError(f"❌ Google Drive API error while deleting '{file_name}': {error}")
 
 
 

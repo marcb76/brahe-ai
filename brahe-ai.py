@@ -64,6 +64,7 @@ google_service = None  # This will hold the instance of the GoogleService once i
 agent_execution_start_dt = None  # This will be set to the datetime when the agent starts running
 processing_file_name = None # This will be set to the actual processing file name with timestamp when the agent runs
 processed_file_name = None # This will be set to the actual processed file name with timestamp when the agent runs
+temporary_processing_path = None # This will be set to the actual temporary processing file path when the agent runs
 output_file_path = None # This will be set to the actual output file path (Google Drive folder ID) when the agent runs
 output_file_name = None # This will be set to the actual output file name with timestamp when the agent runs
 
@@ -193,8 +194,9 @@ def validate_configuration():
 def execute_agent():
     # Apply patterns to runtime generataed file names
     fileTimespan = agent_execution_start_dt.strftime(TIMESTAMP_FORMAT)
-    global processing_file_name, processed_file_name, output_file_path, output_file_name
+    global processing_file_name, temporary_path, processed_file_name, output_file_path, output_file_name
     processing_file_name = os.path.join(PROCESSING_FOLDER, PROCESSING_FILE_NAME_PATTERN.format(RAW_DATA_REPORT_INPUT_FILE_NAME, fileTimespan))
+    temporary_path = os.path.join(TEMP_FOLDER, f"exec_{fileTimespan}")
     processed_file_name = os.path.join(PROCESSED_FOLDER, PROCESSED_FILE_NAME_PATTERN.format(RAW_DATA_REPORT_INPUT_FILE_NAME, fileTimespan))
     output_file_path = GOOGLE_DRIVE_OUTPUT_FOLDER_ID
     output_file_name = OUTPUT_FILE_NAME_PATTERN.format(RAW_DATA_REPORT_INPUT_FILE_NAME, fileTimespan)
@@ -206,6 +208,37 @@ def execute_agent():
         processed_file_name = processed_file_name.replace(".xlsx", "", processed_file_name.count(".xlsx") - 1)
     if output_file_name.count(".xlsx") > 1:
         output_file_name = output_file_name.replace(".xlsx", "", output_file_name.count(".xlsx") - 1)
+
+    # Check if any raw data report input file exists in the Google Drive input folder. If there is not file there, a FileNotFoundError will be raised and handled in the main function, sending an email notification about the missing file and exiting with error. 
+    # If the file exists, it will be downloaded to a temporary folder, renamed with the processing file name pattern (including timestamp) and moved to the processing folder. 
+    google_service.download_file_by_name(folder_id=GOOGLE_DRIVE_INPUT_FOLDER_ID, file_name=RAW_DATA_REPORT_INPUT_FILE_NAME, dest_folder=temporary_path)
+
+    # Rename (move) downloaded file from temporary folder to the processing file name with timestamp
+    downloaded_file_path = os.path.join(temporary_path, RAW_DATA_REPORT_INPUT_FILE_NAME)
+    os.rename(downloaded_file_path, processing_file_name)
+
+    # Remove raw data report from google drive input folder to avoid re-processing the same file in subsequent runs (this is a design choice, we could also choose to keep it and just skip it if it already exists locally)
+    google_service.delete_file_by_name(folder_id=GOOGLE_DRIVE_INPUT_FOLDER_ID, file_name=RAW_DATA_REPORT_INPUT_FILE_NAME)
+
+    #
+    #
+    #
+    #
+    #
+
+    # Rename (move) raw data report from processing folder to processed folder with the processed file name with timestamp (this is a design choice, we could also choose to keep it in the processing folder and just skip it if it already exists in subsequent runs)
+    os.rename(processing_file_name, processed_file_name)
+
+    # Upload final output file to Google Drive output folder with the output file name pattern (including timestamp). This will be done at the end of the processing, after generating the insights with Gemini and saving the output file locally.
+    google_service.upload_file(source_file=processed_file_name, folder_id=GOOGLE_DRIVE_OUTPUT_FOLDER_ID, file_name=output_file_name)
+
+    # Remove temporary folder and its content
+    if os.path.exists(temporary_path):
+        for file in os.listdir(temporary_path):
+            os.remove(os.path.join(temporary_path, file))
+        os.rmdir(temporary_path)
+
+
 
 
     # All done!
@@ -316,7 +349,13 @@ def main():
     agent_execution_start_dt = datetime.now()
     agent_execution_start = agent_execution_start_dt.strftime("%Y-%m-%d %H:%M:%S")
     print(f"   Agent execution started at: {agent_execution_start}")
-    execute_agent()
+    try:
+        execute_agent()
+    except Exception as e:
+        print(f"❌ Error during agent execution: {e}")
+        send_email(subject=f"{AGENT_NAME} Execution Error", body=f"An error occurred during agent execution: {e}. Please check the agent's log folder for details and investigate the issue.", to_emails=ON_ERROR_NOTIFICATION_EMAILS)
+        print("Exiting with error code 1 due to execution failure.")
+        sys.exit(1)
     print(f"   Processing file name: {processing_file_name}")
     print(f"   Processed file name:  {processed_file_name}")
     print(f"   Output file path:     {output_file_path}")
