@@ -22,8 +22,7 @@ set ZIP_FILENAME=brahe-ai.bkp-%ZIP_FILENAME_MONTH%-%ZIP_FILENAME_DAY%-%ZIP_FILEN
 set WORKSPACE_PATH=C:\Users\marcb\OneDrive\Personal Managed\Brahe-ai\brahe-ai-workspace
 del /Q "%ZIP_PATH%\%ZIP_FILENAME%"
 
-cd "%WORKSPACE_PATH%"
-echo "%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*"
-"%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*" -xr!logs\ -xr!venv\ -xr!.vscode\ -xr!.git\ -xr!*.log -xr!*.tmp -xr!*.bak
-cd "%WORKSPACE_PATH%"
+
+echo "%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*" -xr!log\ -xr!venv\ -xr!.vscode\ -xr!.git\ -xr!*.log -xr!*.tmp -xr!*.bak
+"%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*" -xr!log\ -xr!venv\ -xr!.vscode\ -xr!.git\ -xr!*.log -xr!*.tmp -xr!*.bak
 pause
