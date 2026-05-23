@@ -23,8 +23,8 @@ class GoogleService:
         """
         Initialize and authenticate Google services (Drive and Gmail).
         Parameters:
-        - credentials_path: Path to the client secrets JSON file.
-        - token_path: Path to the token JSON file.
+            - credentials_path: Path to the client secrets JSON file.
+            - token_path: Path to the token JSON file.
         """
         self.creds = self._authenticate(credentials_path, token_path)
         self.drive_client = build('drive', 'v3', credentials=self.creds)
@@ -40,8 +40,8 @@ class GoogleService:
         If invalid or expired, initiates the OAuth flow to get a new token.
         Saves the new token for future use.
         Parameters:
-        - credentials_path: Path to the client secrets JSON file.
-        - token_path: Path to the token JSON file.
+            - credentials_path: Path to the client secrets JSON file.
+            - token_path: Path to the token JSON file.
         Raises FileNotFoundError if credentials file is missing or empty, and HttpError for API issues.
         """
 
@@ -67,9 +67,9 @@ class GoogleService:
         """
         Locate a file by name within a Drive folder and download it locally.
         Parameters:
-        - folder_id: ID of the Drive folder to search within.
-        - file_name: Name of the file to search for.
-        - dest_folder: Local folder to save the downloaded file.
+            - folder_id: ID of the Drive folder to search within.
+            - file_name: Name of the file to search for.
+            - dest_folder: Local folder to save the downloaded file.
         Returns: Local path of the downloaded file.
         Raises: FileNotFoundError if the file is not found, HttpError for API issues.
         """
@@ -110,11 +110,11 @@ class GoogleService:
         """
         Send an email using the Gmail API, supporting multiple recipients, CC, and attachments.
         Parameters:
-        - to_emails: Comma-separated string of recipient email addresses.
-        - subject: Subject of the email.
-        - body: Body content of the email.
-        - cc_emails: Comma-separated string of CC email addresses (optional).
-        - attachment_path: Path to the file to attach (optional).
+            - to_emails: Comma-separated string of recipient email addresses.
+            - subject: Subject of the email.
+            - body: Body content of the email.
+            - cc_emails: Comma-separated string of CC email addresses (optional).
+            - attachment_path: Path to the file to attach (optional).
         Raises: HttpError for API issues.
         """
         try:

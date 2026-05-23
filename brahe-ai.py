@@ -82,6 +82,12 @@ except ImportError as e:
     print(f"❌ Unable to import service google_service from services: {e}")
     print("PANIC: Google Service is required for error notification via email. We could not even report this issue via email. Please check the services/google_service.py file and ensure it exists and is correctly implemented.")
     sys.exit(1)
+try:
+    from services.gemini_service import GeminiService
+except ImportError as e:
+    print(f"❌ Unable to import service gemini_service from services: {e}")
+    print("PANIC: Gemini Service is required for the core functionality of this agent. Please check the services/gemini_service.py file and ensure it exists and is correctly implemented.")
+    sys.exit(1)
 
 
 
@@ -286,13 +292,14 @@ def main():
         sys.exit(1)
     print("  ✅ GoogleService instanciated successfully!")
     print("  GeminiService...")
-#    try:
-#        gemini_service = GeminiService()
-#    except Exception as e:
-#        print(f"    ❌ Error instanciating GeminiService: {e}")
-#        send_email(subject=f"{AGENT_NAME} Initialization Error", body=f"Unable to initialize GeminiService: {e}. Please check the services/gemini_service.py file and ensure it exists and is correctly implemented.", to_emails=ON_ERROR_NOTIFICATION_EMAILS)
-#        print("    Exiting with error code 1 due to GeminiService initialization failure.")
-#        sys.exit(1)
+    try:
+        global gemini_service
+        gemini_service = GeminiService(gemini_model=GEMINI_MODEL, gemini_api_key=GEMINI_API_KEY)
+    except Exception as e:
+        print(f"    ❌ Error instanciating GeminiService: {e}")
+        send_email(subject=f"{AGENT_NAME} Initialization Error", body=f"Unable to initialize GeminiService: {e}. Please check the services/gemini_service.py file and ensure it exists and is correctly implemented.", to_emails=ON_ERROR_NOTIFICATION_EMAILS)
+        print("    Exiting with error code 1 due to GeminiService initialization failure.")
+        sys.exit(1)
     print("  ✅ GeminiService instanciated successfully!")
     print("✅ Services instanciated successfully!")
     print("✅ Ready to process data and generate insights with Gemini!")
