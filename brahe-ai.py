@@ -7,7 +7,9 @@ Main Orchestrator
 """
 
 import os
+import shutil
 import sys
+#import pandas as pd
 from datetime import datetime
 
 try:
@@ -60,6 +62,7 @@ AGENT_NAME = "brahe-ai"
 AGENT_VERSION = "0.0.1"
 AGENT_DESCRIPTION = "AI Agent based on Gemini, focused on processing data from Excel files and generating insights based on that data."
 TIMESTAMP_FORMAT = "%Y.%m.%d-%H-%M-%S"
+WORK_AREA_PROCESSING_FILE_NAME_PATTERN = "brahe-ai-processing-{}.xlsx"  # {} will be replaced with timestamp
 google_service = None  # This will hold the instance of the GoogleService once it's instantiated
 agent_execution_start_dt = None  # This will be set to the datetime when the agent starts running
 processing_file_name = None # This will be set to the actual processing file name with timestamp when the agent runs
@@ -197,6 +200,7 @@ def execute_agent():
     global processing_file_name, temporary_path, processed_file_name, output_file_path, output_file_name
     processing_file_name = os.path.join(PROCESSING_FOLDER, PROCESSING_FILE_NAME_PATTERN.format(RAW_DATA_REPORT_INPUT_FILE_NAME, fileTimespan))
     temporary_path = os.path.join(TEMP_FOLDER, f"exec_{fileTimespan}")
+    workarea_file_name = os.path.join(temporary_path, WORK_AREA_PROCESSING_FILE_NAME_PATTERN.format(fileTimespan))
     processed_file_name = os.path.join(PROCESSED_FOLDER, PROCESSED_FILE_NAME_PATTERN.format(RAW_DATA_REPORT_INPUT_FILE_NAME, fileTimespan))
     output_file_path = GOOGLE_DRIVE_OUTPUT_FOLDER_ID
     output_file_name = OUTPUT_FILE_NAME_PATTERN.format(RAW_DATA_REPORT_INPUT_FILE_NAME, fileTimespan)
@@ -209,23 +213,61 @@ def execute_agent():
     if output_file_name.count(".xlsx") > 1:
         output_file_name = output_file_name.replace(".xlsx", "", output_file_name.count(".xlsx") - 1)
 
-    # Check if any raw data report input file exists in the Google Drive input folder. If there is not file there, a FileNotFoundError will be raised and handled in the main function, sending an email notification about the missing file and exiting with error. 
+    # Check if any raw data report input file exists in the Google Drive input folder. If there is not file there, a FileNotFoundError will be raised.
     # If the file exists, it will be downloaded to a temporary folder, renamed with the processing file name pattern (including timestamp) and moved to the processing folder. 
     google_service.download_file_by_name(folder_id=GOOGLE_DRIVE_INPUT_FOLDER_ID, file_name=RAW_DATA_REPORT_INPUT_FILE_NAME, dest_folder=temporary_path)
 
-    # Rename (move) downloaded file from temporary folder to the processing file name with timestamp
-    downloaded_file_path = os.path.join(temporary_path, RAW_DATA_REPORT_INPUT_FILE_NAME)
-    os.rename(downloaded_file_path, processing_file_name)
-
     # Remove raw data report from google drive input folder to avoid re-processing the same file in subsequent runs (this is a design choice, we could also choose to keep it and just skip it if it already exists locally)
-    google_service.delete_file_by_name(folder_id=GOOGLE_DRIVE_INPUT_FOLDER_ID, file_name=RAW_DATA_REPORT_INPUT_FILE_NAME)
+    # **** Uncomment next line (and delete this line) when dev phase is done!
+    # google_service.delete_file_by_name(folder_id=GOOGLE_DRIVE_INPUT_FOLDER_ID, file_name=RAW_DATA_REPORT_INPUT_FILE_NAME)
 
-    #
-    #
-    #
-    #
-    #
+    # Copy downloaded file from temporary folder to the processing folder with the processing file name with timestamp
+    shutil.copy(os.path.join(temporary_path, RAW_DATA_REPORT_INPUT_FILE_NAME), processing_file_name)
 
+    # Rename downloaded file in temporary folder to the workarea's processing file
+    os.rename(os.path.join(temporary_path, RAW_DATA_REPORT_INPUT_FILE_NAME), workarea_file_name)
+
+    # Download general rules from Google Drive to the temporary folder to be used as input for Gemini. If no general rules file is found, a FileNotFoundError will be raised.
+    general_rules_file_name = os.path.join(temporary_path, GENERAL_RULES_FILE_NAME)
+    google_service.download_file_by_name(folder_id=GOOGLE_DRIVE_RULES_FOLDER_ID, file_name=GENERAL_RULES_FILE_NAME, dest_folder=temporary_path)
+
+    # Load agent rules
+    #FORMAT_RULES_SHEET_NAME = "Format, Sort & Filter"
+    #AGENT_TUNING_SHEET_NAME = "Agent Tuning"
+    #format_rules_df = pd.read_excel(general_rules_file_name, sheet_name=FORMAT_RULES_SHEET_NAME);
+    #format_rules = format_rules_df.values.tolist()
+    #agent_tuning_df = pd.read_excel(general_rules_file_name, sheet_name=AGENT_TUNING_SHEET_NAME);
+    #agent_tuning = agent_tuning_df.values.tolist()
+    #print(f"✅ Input file downloaded and moved into work area: {workarea_file_name}")
+    #print(f"✅ General rules file downloaded: {general_rules_file_name}")
+    #for idx, rule in enumerate(format_rules):
+    #    print(f"  Format Rule {idx+1}: {rule}")
+    #for idx, tuning in enumerate(agent_tuning):
+    #    print(f"  Agent Tuning {idx+1}: {tuning}")
+    #print("✅ Ready to process data and generate insights with Gemini!")
+
+    
+    
+    
+    
+    ##############################################################################################################################
+    ##############################################################################################################################
+    # DO THE MAGIC WITH GEMINI!
+
+
+
+
+
+
+
+
+
+
+
+
+    ##############################################################################################################################
+    ##############################################################################################################################
+    # GEMINI MAGIC DONE!
     # Rename (move) raw data report from processing folder to processed folder with the processed file name with timestamp (this is a design choice, we could also choose to keep it in the processing folder and just skip it if it already exists in subsequent runs)
     os.rename(processing_file_name, processed_file_name)
 
@@ -233,10 +275,11 @@ def execute_agent():
     google_service.upload_file(source_file=processed_file_name, folder_id=GOOGLE_DRIVE_OUTPUT_FOLDER_ID, file_name=output_file_name)
 
     # Remove temporary folder and its content
-    if os.path.exists(temporary_path):
-        for file in os.listdir(temporary_path):
-            os.remove(os.path.join(temporary_path, file))
-        os.rmdir(temporary_path)
+    # **** Uncomment next lines (and delete this line) when dev phase is done!
+    #if os.path.exists(temporary_path):
+    #    for file in os.listdir(temporary_path):
+    #        os.remove(os.path.join(temporary_path, file))
+    #    os.rmdir(temporary_path)
 
 
 
