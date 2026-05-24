@@ -23,6 +23,6 @@ set WORKSPACE_PATH=C:\Users\marcb\OneDrive\Personal Managed\Brahe-ai\brahe-ai-wo
 del /Q "%ZIP_PATH%\%ZIP_FILENAME%"
 
 
-echo "%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*" -xr!log\ -xr!venv\ -xr!.vscode\ -xr!.git\ -xr!*.log -xr!*.tmp -xr!*.bak
-"%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*" -xr!log\ -xr!venv\ -xr!.vscode\ -xr!.git\ -xr!*.log -xr!*.tmp -xr!*.bak
+echo "%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*" -xr!log\ -xr!processed\ -xr!processing\ -xr!tmp\ -xr!venv\ -xr!.vscode\ -xr!.git\ -xr!*.log -xr!*.tmp -xr!*.bak
+"%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" a "%ZIP_PATH%\%ZIP_FILENAME%" "%WORKSPACE_PATH%\*" -xr!log\ -xr!processed\ -xr!processing\ -xr!tmp\ -xr!venv\ -xr!.vscode\ -xr!.git\ -xr!*.log -xr!*.tmp -xr!*.bak
 pause
