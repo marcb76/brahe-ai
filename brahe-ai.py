@@ -9,7 +9,7 @@ Main Orchestrator
 import os
 import shutil
 import sys
-#import pandas as pd
+import pandas as pd
 from datetime import datetime
 
 try:
@@ -193,6 +193,36 @@ def validate_configuration():
 
 
 ###############################################################
+# doTheMagicWithGemini
+def do_the_magic_with_gemini(workarea_path, workarea_file_name, format_rules, agent_tuning):
+    print(f"✅ Input file downloaded and moved into work area: {workarea_file_name}")
+    print("✅ General rules file downloaded (and parsed):")
+    print("   Format Rules:")
+    for idx, rule in enumerate(format_rules):
+        print(f"     Format Rule {idx+1}: {rule}")
+    print("   Agent Tuning:")
+    for idx, tuning in enumerate(agent_tuning):
+        print(f"     Agent Tuning {idx+1}: {tuning}")
+    print("✅ Ready to process data and generate insights with Gemini!")
+    print("   (This is where the magic happens! 🪄✨)")
+
+
+
+
+
+
+
+
+    print("   Insights generated with Gemini!")
+
+
+
+
+
+
+
+
+###############################################################
 # executeAgent
 def execute_agent():
     # Apply patterns to runtime generataed file names
@@ -232,42 +262,27 @@ def execute_agent():
     google_service.download_file_by_name(folder_id=GOOGLE_DRIVE_RULES_FOLDER_ID, file_name=GENERAL_RULES_FILE_NAME, dest_folder=temporary_path)
 
     # Load agent rules
-    #FORMAT_RULES_SHEET_NAME = "Format, Sort & Filter"
-    #AGENT_TUNING_SHEET_NAME = "Agent Tuning"
-    #format_rules_df = pd.read_excel(general_rules_file_name, sheet_name=FORMAT_RULES_SHEET_NAME);
-    #format_rules = format_rules_df.values.tolist()
-    #agent_tuning_df = pd.read_excel(general_rules_file_name, sheet_name=AGENT_TUNING_SHEET_NAME);
-    #agent_tuning = agent_tuning_df.values.tolist()
-    #print(f"✅ Input file downloaded and moved into work area: {workarea_file_name}")
-    #print(f"✅ General rules file downloaded: {general_rules_file_name}")
-    #for idx, rule in enumerate(format_rules):
-    #    print(f"  Format Rule {idx+1}: {rule}")
-    #for idx, tuning in enumerate(agent_tuning):
-    #    print(f"  Agent Tuning {idx+1}: {tuning}")
-    #print("✅ Ready to process data and generate insights with Gemini!")
+    FORMAT_RULES_SHEET_NAME = "Format, Sort & Filter"
+    AGENT_TUNING_SHEET_NAME = "Agent Tuning"
+    format_rules_df = pd.read_excel(general_rules_file_name, sheet_name=FORMAT_RULES_SHEET_NAME);
+    format_rules = format_rules_df.values.tolist()
+    agent_tuning_df = pd.read_excel(general_rules_file_name, sheet_name=AGENT_TUNING_SHEET_NAME);
+    agent_tuning = agent_tuning_df.values.tolist()
 
-    
-    
-    
+
+
     
     ##############################################################################################################################
     ##############################################################################################################################
     # DO THE MAGIC WITH GEMINI!
-
-
-
-
-
-
-
-
-
-
-
-
+    do_the_magic_with_gemini(workarea_path=temporary_path, workarea_file_name=workarea_file_name, format_rules=format_rules, agent_tuning=agent_tuning)
     ##############################################################################################################################
     ##############################################################################################################################
     # GEMINI MAGIC DONE!
+
+
+
+
     # Rename (move) raw data report from processing folder to processed folder with the processed file name with timestamp (this is a design choice, we could also choose to keep it in the processing folder and just skip it if it already exists in subsequent runs)
     os.rename(processing_file_name, processed_file_name)
 
@@ -399,12 +414,6 @@ def main():
         send_email(subject=f"{AGENT_NAME} Execution Error", body=f"An error occurred during agent execution: {e}. Please check the agent's log folder for details and investigate the issue.", to_emails=ON_ERROR_NOTIFICATION_EMAILS)
         print("Exiting with error code 1 due to execution failure.")
         sys.exit(1)
-    print(f"   Processing file name: {processing_file_name}")
-    print(f"   Processed file name:  {processed_file_name}")
-    print(f"   Output file path:     {output_file_path}")
-    print(f"   Output file name:     {output_file_name}")
-
-
     agent_execution_end_dt = datetime.now()
     agent_execution_end = agent_execution_end_dt.strftime("%Y-%m-%d %H:%M:%S")
     agent_execution_time = agent_execution_end_dt - agent_execution_start_dt
