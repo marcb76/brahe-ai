@@ -102,9 +102,6 @@ class AgentService:
             - format_rules: The list of formatting, sorting, and filtering rules loaded from the Excel file.
             - agent_tuning: The list of agent tuning parameters loaded from the Excel file.
         """
-        # Implement your core logic here to process the input file based on the loaded rules and generate output using Gemini.
-        # This is a placeholder for where you would add the specific processing steps for your agent's functionality.
-
         print("")
         print("")
         print("")
