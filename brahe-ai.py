@@ -19,7 +19,7 @@ from datetime import datetime
 # General variables
 AGENT_NAME = "brahe-ai"
 AGENT_VERSION = "0.0.1"
-AGENT_DESCRIPTION = "AI Agent based on Gemini, focused on processing data from Excel files and generating insights based on that data."
+AGENT_DESCRIPTION = "AI Agent based on Gemini for meta-information insights based on raw data."
 configuration_service = None  # This will hold the instance of the ConfigService once it's instantiated
 google_service = None  # This will hold the instance of the GoogleService once it's instantiated
 notification_service = None  # This will hold the instance of the NotificationService once it's instantiated
@@ -115,7 +115,7 @@ def main():
     print("")
     print("-------------------------------------------------------------------")
     print(f"-- {AGENT_NAME}-{AGENT_VERSION}: AI Agent based on Gemini")
-    print("-- Meta-Information based on raw data")
+    print(f"-- {AGENT_DESCRIPTION}")
     print("-- 🪐 Tycho Brahe would be proud! 🪐")
     print("-- https://en.wikipedia.org/wiki/Tycho_Brahe")
     print("--")

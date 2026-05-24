@@ -135,6 +135,8 @@ class AgentService:
         Main execution method for the agent. This is where the core logic of the agent will be implemented.
         It will use the prepared paths, download files (from Google Drive), parse rules, invoke (several times) gemini, generate new insight and generate the outputs to Google Drive).
         """
+        ################################################################################################################################
+        # PRE-PROCESSING STEPS: Prepare paths, download input file from Google Drive, load rules from Excel, etc.
         # Apply patterns to paths and file names
         paths = self.prepare_runtime_paths(execution_start_dt)
         
@@ -159,8 +161,8 @@ class AgentService:
 
 
 
-        ##############################################################################################################################
-        ##############################################################################################################################
+        ################################################################################################################################
+        ################################################################################################################################
         # DO THE MAGIC WITH GEMINI!
         output_files = self.do_the_magic_with_gemini(
             workarea_path=paths["temporary_folder"],
@@ -168,12 +170,14 @@ class AgentService:
             format_rules=format_rules,
             agent_tuning=agent_tuning
         )
-        ##############################################################################################################################
-        ##############################################################################################################################
+        ################################################################################################################################
+        ################################################################################################################################
 
 
 
 
+        ################################################################################################################################
+        # POST-PROCESSING STEPS: Move processed file to processed folder, upload output files to Google Drive, clean up temporary files, etc.
         # Move (rename) processed file from processing folder to processed folder
         shutil.move(paths["processing_file_name"], paths["processed_file_name"])
 
