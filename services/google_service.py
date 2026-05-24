@@ -1,13 +1,14 @@
 import os
 import io
 import base64
+import mimetypes
 from email.message import EmailMessage
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 
 
@@ -53,7 +54,7 @@ class GoogleService:
                 creds.refresh(Request())
             else:
                 if not os.path.exists(credentials_path) or os.path.getsize(credentials_path) == 0:
-                    raise FileNotFoundError(f"❌ The file '{credentials_path}' is empty or does not exist in the root directory. Please download your Desktop credentials from Google Cloud Console.")
+                    raise FileNotFoundError(f"The file '{credentials_path}' is empty or does not exist in the root directory. Please download your Desktop credentials from Google Cloud Console.")
                 flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
                 creds = flow.run_local_server(port=0)
             with open(token_path, 'w') as token:
@@ -83,7 +84,7 @@ class GoogleService:
             ).execute()
             items = results.get('files', [])
             if not items:
-                raise FileNotFoundError(f"⚠️ File '{file_name}' not found in the specified Drive folder '{folder_id}'.")
+                raise FileNotFoundError(f"File '{file_name}' not found in the specified Drive folder '{folder_id}'.")
 
             # Binary download flow for the first matching file (assuming unique names within the folder)                
             file_id = items[0]['id']
@@ -99,9 +100,8 @@ class GoogleService:
             with open(local_path, 'wb') as f:
                 f.write(fh.getvalue())
             return local_path
-
-        except HttpError as error:
-            raise HttpError(f"❌ Google Drive API error while downloading '{file_name}': {error}")
+        except Exception as error:
+            raise RuntimeError(f"Google Drive API error while downloading '{file_name}': {error}")
 
 
 
@@ -117,28 +117,40 @@ class GoogleService:
         Raises: FileNotFoundError if the source file is missing, RuntimeError for API issues.
         """
         try:
+            # Validate file existance and obtain its MIME type for proper handling in Google Drive. If the file doesn't exist, raise a clear error message.
             if not os.path.exists(source_file):
-                raise FileNotFoundError(f"❌ The file '{source_file}' does not exist. Please check the path and try again.")
+                raise FileNotFoundError(f"The file '{source_file}' does not exist. Please check the path and try again.")
+            mime_type, _ = mimetypes.guess_type(source_file)
+            if mime_type is None:
+                mime_type = 'application/octet-stream'
+
+            # Prepare the file metadata and content for upload. We use MediaIoBaseUpload to handle the file upload stream, which is more efficient for larger files. 
+            # The file will be uploaded with the specified name and placed in the target folder in Drive.
             file_metadata = {
                 'name': file_name,
                 'parents': [folder_id]
             }
-            media = MediaIoBaseDownload(io.BytesIO(open(source_file, 'rb').read()), mimetype='application/octet-stream')
+            with open(source_file, 'rb') as f:
+                bio = io.BytesIO(f.read())
+            media = MediaIoBaseUpload(bio, mimetype=mime_type, resumable=True)
+
+            # Execute the upload request to Google Drive and return the uploaded file's metadata, which includes its unique ID and name. 
+            # This information can be useful for future reference or operations on the file in Drive.            
             uploaded_file = self.drive_client.files().create(body=file_metadata, media_body=media, fields='id, name').execute()
             return uploaded_file
-        except HttpError as error:
-            raise RuntimeError(f"❌ Google Drive API error while uploading '{file_name}': {error}")
-    
-    
-    
-    
+        except Exception as error:
+            raise RuntimeError(f"Google Drive API error while uploading '{file_name}': {error}")    
+
+
+
+
     def delete_file_by_name(self, folder_id: str, file_name: str):
         """
         Locate a file by name within a Drive folder and delete it.
         Parameters:
             - folder_id: ID of the Drive folder to search within.
             - file_name: Name of the file to search for and delete.
-        Raises: FileNotFoundError if the file is not found, HttpError for API issues
+        Raises: FileNotFoundError if the file is not found, RuntimeError for API issues
         """
         try:
             # Query to search for the file by name, not in trash, and belonging to the parent folder
@@ -150,13 +162,13 @@ class GoogleService:
             ).execute()
             items = results.get('files', [])
             if not items:
-                raise FileNotFoundError(f"⚠️ File '{file_name}' not found in the specified Drive folder '{folder_id}' for deletion.")
+                raise FileNotFoundError(f"File '{file_name}' not found in the specified Drive folder '{folder_id}' for deletion.")
             
             # Delete the first matching file (assuming unique names within the folder)
             file_id = items[0]['id']
             self.drive_client.files().delete(fileId=file_id).execute()
-        except HttpError as error:
-            raise RuntimeError(f"❌ Google Drive API error while deleting '{file_name}': {error}")
+        except Exception as error:
+            raise RuntimeError(f"Google Drive API error while deleting '{file_name}': {error}")
 
 
 
@@ -170,7 +182,7 @@ class GoogleService:
             - body: Body content of the email.
             - cc_emails: Comma-separated string of CC email addresses (optional).
             - attachment_path: Path to the file to attach (optional).
-        Raises: HttpError for API issues.
+        Raises: RuntimeError for API issues.
         """
         try:
             message = EmailMessage()
@@ -196,4 +208,4 @@ class GoogleService:
             self.gmail_client.users().messages().send(userId="me", body=create_message).execute()
             
         except HttpError as error:
-            raise HttpError(f"❌ Gmail API error: {error}")
+            raise HttpError(f"Gmail API error: {error}")

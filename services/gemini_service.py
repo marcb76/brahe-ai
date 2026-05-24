@@ -14,9 +14,9 @@ class GeminiService:
         Raises ValueError if either the model name or API key is missing.
         """
         if not gemini_model:
-            raise ValueError("❌ Gemini model name is missing. Please set the 'GEMINI_MODEL' environment variable with the desired Google AI model (e.g., 'gemini-1.5-flash').")
+            raise ValueError("Gemini model name is missing. Please set the 'GEMINI_MODEL' environment variable with the desired Google AI model (e.g., 'gemini-1.5-flash').")
         if not gemini_api_key:
-            raise ValueError("❌ Gemini API key is missing. Please set the 'GEMINI_API_KEY' environment variable with your Google AI API key.")
+            raise ValueError("Gemini API key is missing. Please set the 'GEMINI_API_KEY' environment variable with your Google AI API key.")
         genai.configure(api_key=gemini_api_key)
         # Usamos 1.5-flash ya que está optimizado para ventanas de contexto gigantes (multimodal)
         self.model_name = gemini_model
@@ -33,7 +33,7 @@ class GeminiService:
             - file_paths: List of local file paths to be processed (e.g., ['tmp/reporte.xlsx', 'tmp/reglas.pdf']) (optional).
             - json_output: If True, forces Gemini to respond strictly in valid JSON format (optional).
          Returns: The generated response from Gemini, either as text or JSON depending on the configuration.
-         Raises: ValueError for missing prompt, and general Exception for API issues.
+         Raises: ValueError for missing prompt, and RuntimeError for API issues.
          Note: The method handles the entire flow from uploading files to Gemini, generating the response, and cleaning up temporary files in Google AI's File API.
          """
         uploaded_files = []
@@ -43,7 +43,7 @@ class GeminiService:
             if file_paths:
                 for path in file_paths:
                     if not os.path.exists(path):
-                        raise FileNotFoundError(f"❌ The file '{path}' does not exist. Please check the path and try again.")
+                        raise FileNotFoundError(f"The file '{path}' does not exist. Please check the path and try again.")
                     g_file = genai.upload_file(path=path)
                     uploaded_files.append(g_file)
 
@@ -64,7 +64,7 @@ class GeminiService:
             response = model.generate_content(contents)
             return response.text
         except Exception as e:
-            raise Exception(f"❌ Error in Gemini service: {e}")
+            raise RuntimeError(f"Error in Gemini service: {e}")
         finally:
             # Critical Cleanup: Delete temporary files from Google AI's File API to free up memory and avoid hitting storage limits in subsequent runs
             if uploaded_files:
