@@ -1,3 +1,4 @@
+# services/gemini_service.py
 import os
 import google.generativeai as genai
 

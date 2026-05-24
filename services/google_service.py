@@ -1,3 +1,4 @@
+# services/google_service.py
 import os
 import io
 import base64
@@ -18,6 +19,9 @@ SCOPES = [
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/gmail.send'
 ]
+
+
+
 
 class GoogleService:
     def __init__(self, credentials_path, token_path):
