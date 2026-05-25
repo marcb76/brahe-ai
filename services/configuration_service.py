@@ -23,6 +23,7 @@ class ConfigurationService:
         # Gemini Configuration
         self.GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+        self.GEMINI_DEBUG_MODE = os.getenv("GEMINI_DEBUG_MODE", "False").lower() in ("true", "1", "t", "yes", "y")
 
         # Input and Output Patterns
         self.GENERAL_RULES_FILE_NAME = os.getenv("GENERAL_RULES_FILE_NAME", "brahe-ai-general-rules.xlsx")

@@ -7,12 +7,13 @@ import google.generativeai as genai
 
 
 class GeminiService:
-    def __init__(self, gemini_model, gemini_api_key):
+    def __init__(self, gemini_model, gemini_api_key, debugMode=False):
         """
         Initialize and authenticate Gemini service.
         Parameters:
             - gemini_model: Name of the Gemini model to use (e.g., 'gemini-1.5-flash').
             - gemini_api_key: API key for authenticating with Google AI services.
+            - debugMode: If True, enables debug mode for detailed logging (optional).
         Raises ValueError if either the model name or API key is missing.
         """
         if not gemini_model:
@@ -20,8 +21,10 @@ class GeminiService:
         if not gemini_api_key:
             raise ValueError("Gemini API key is missing. Please set the 'GEMINI_API_KEY' environment variable with your Google AI API key.")
         genai.configure(api_key=gemini_api_key)
-        # Usamos 1.5-flash ya que está optimizado para ventanas de contexto gigantes (multimodal)
         self.model_name = gemini_model
+        self.debugMode = debugMode
+        if self.debugMode:
+            print(f"GeminiService::__init__::initialized with model: {self.model_name}; debugMode: {self.debugMode}")
 
 
 
@@ -60,10 +63,25 @@ class GeminiService:
                 system_instruction=system_instruction,
                 generation_config=generation_config
             )
+
             
             # Consolidate the content (Combine the uploaded files from Google with the text prompt) and generate the response from Gemini (do the magic!)
             contents = uploaded_files + [prompt]
+            if self.debugMode:
+                print(f"GeminiService::gemini::invoking gemini with prompt: {prompt.replace(chr(10), ' ').replace(chr(13), ' ')}")
+                print(f"GeminiService::gemini::         system_instruction: {system_instruction.replace(chr(10), ' ').replace(chr(13), ' ')}")
+                print(f"GeminiService::gemini::                json_output: {json_output}")
             response = model.generate_content(contents)
+            if self.debugMode:
+                print(f"GeminiService::gemini::raw response from Gemini: {response.text}")
+                if hasattr(response, 'mime_type'):
+                    print(f"GeminiService::gemini::response MIME type: {response.mime_type}")
+                if hasattr(response, 'files'):
+                    print(f"GeminiService::gemini::response includes files: {[f.name for f in response.files]}")
+                if hasattr(response, 'metadata'):
+                    print(f"GeminiService::gemini::response metadata: {response.metadata}")
+                if hasattr(response, 'usage_metadata'):
+                    print(f"GeminiService::gemini::response usage metadata-tokens-in: {response.usage_metadata.prompt_token_count}, tokens-out: {response.usage_metadata.candidates_token_count}, total-tokens: {response.usage_metadata.total_token_count}")
             return response.text
         except Exception as e:
             raise RuntimeError(f"Error in Gemini service: {e}")
@@ -74,49 +92,27 @@ class GeminiService:
                     try:
                         genai.delete_file(g_file.name)
                     except Exception:
+                        if self.debugMode:
+                            print(f"GeminiService::gemini::failed to delete temporary file: {g_file.name}")
                         pass # Prevent a failure in freeing memory from stopping the main flow
 
 
 
 
-    @staticmethod
-    def sanitize_gemini_generated_python_response(raw_response):
+    def sanitize_gemini_generated_python_response(self, raw_response):
         """
-        Parse and sanitize Gemini's raw response to extract clean Python code that can be executed, especially when Gemini is asked to generate code in a JSON format or within Markdown code blocks. This function handles various formats in which Gemini might return the code, such as:
-            - Direct code as a string.
-            - JSON object with a "code" field.
-            - Markdown code blocks.
+        Parse and sanitize Gemini's raw response to extract clean Python code that can be executed.
+        IMPORTANT: It is expected that Gemini was invoked with json_output=False.
         Parameters:
             - raw_response: The original response from Gemini, which may contain the code in various formats.
         Returns: A clean string containing only the Python code that can be executed.
         """
 
-        # If it comes as JSON {"code": "..."}, extract the value
+        if self.debugMode:
+            print(f"GeminiService::sanitize_gemini_generated_python_response::sanitizing raw response: {raw_response}")
+        if raw_response is None:
+            return ""
         code = raw_response.strip()
-        try:
-            if code.startswith('{'):
-                data = json.loads(code)
-                if 'code' in data:
-                    code = data['code']
-        except json.JSONDecodeError:
-            # If not valid JSON, continue with the original string
-            pass
-
-        # Remove Markdown code block markers (```python ... ```)
-        # Look for blocks delimited by ```
-        if "```" in code:
-            parts = code.split("```")
-            # If it has ```python at the start, the code is usually in the second segment
-            if len(parts) >= 3:
-                code = parts[1].replace("python", "", 1).strip()
-            else:
-                code = parts[0].strip()
-
-        # Remove any escaped quotes that Gemini might have included (e.g., \"df = ...\" or \'df = ...\')
-        code = code.replace('\\"', '"').replace("\\'", "'")
-        
-        # Remove enclosing quotes that Gemini sometimes includes (e.g., "df = ...")
-        code = code.strip('"').strip("'")
-
-        # Final cleanup of any extraneous whitespace
-        return code.strip()
+        if self.debugMode:
+            print(f"GeminiService::sanitize_gemini_generated_python_response::sanitized code: {code}")
+        return code

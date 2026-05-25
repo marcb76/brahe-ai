@@ -215,7 +215,7 @@ def main():
     print("  GeminiService...")
     try:
         global gemini_service
-        gemini_service = GeminiService(gemini_model=configuration_service.GEMINI_MODEL, gemini_api_key=configuration_service.GEMINI_API_KEY)
+        gemini_service = GeminiService(gemini_model=configuration_service.GEMINI_MODEL, gemini_api_key=configuration_service.GEMINI_API_KEY, debugMode=configuration_service.GEMINI_DEBUG_MODE)
     except Exception as e:
         print(f"    ❌ Error instanciating GeminiService: {e}")
         notification_service.send_email(subject=f"{AGENT_NAME} Initialization Error", body=f"Unable to initialize GeminiService: {e}. Please check the services/gemini_service.py file and ensure it exists and is correctly implemented.", to_emails=configuration_service.ON_ERROR_NOTIFICATION_EMAILS)

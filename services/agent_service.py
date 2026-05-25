@@ -110,19 +110,19 @@ class AgentService:
         gemini_prompt = gemini_context[1].replace("{value}", human_instruction)
         gemini_system_instruction = gemini_context[3]
 
-        print(f"        ** Invoking Gemini with prompt: \"{gemini_prompt}\"")
-        print(f"           over dataframe with shape {df.shape} with the following columns: {df.columns.tolist()}...")
-        gemini_response = self.gemini_service.gemini(prompt=gemini_prompt, system_instruction=gemini_system_instruction, json_output=True)
-        print(f"           Gemini response:               {gemini_response}")
-        gemini_code_to_execute = self.gemini_service.sanitize_gemini_generated_python_response(gemini_response)
-        print(f"           Gemini code to execute via exec: {gemini_code_to_execute}")
-        print(f"           Applying the resulting pandas code over dataframe...")
+        if self.gemini_service.debugMode:
+            print(f"AgentService::gemini::invoking Gemini for dataframe code-generation transformation while applying verb '{verb_name}'")
+        gemini_response = self.gemini_service.gemini(prompt=gemini_prompt, system_instruction=gemini_system_instruction, json_output=False)
         try:
+            if self.gemini_service.debugMode:
+                print(f"AgentService::gemini::applying Gemini-generated code over dataframe with shape: {df.shape}; columns: {df.columns.tolist()}...")
             exec_context = { "df": df.copy(), "google_service": self.google_service }
+            gemini_code_to_execute = self.gemini_service.sanitize_gemini_generated_python_response(gemini_response)
             compiled_gemini_code_to_execute = compile(gemini_code_to_execute, '<string>', 'exec')
             exec(compiled_gemini_code_to_execute, {}, exec_context)
             updated_df = exec_context["df"]
-            print(f"           Resulting dataframe shape after applying verb: {updated_df.shape}; columns: {updated_df.columns.tolist()}")
+            if self.gemini_service.debugMode:
+                print(f"AgentService::gemini::gemini-generated code applied. Resulting dataframe shape: {updated_df.shape}; columns: {updated_df.columns.tolist()}")
             return updated_df
         except SyntaxError as se:
             raise SyntaxError(f"Syntax error in Gemini-generated code: {se}\nGenerated code was:\n{gemini_code_to_execute}")
@@ -144,9 +144,11 @@ class AgentService:
             - A list of output file names generated as a result of applying the agent logic with Gemini. This could include processed Excel files, CSVs, text files, or any other relevant output formats depending on the applied rules and contexts.
         """
 
-        print(f"     Starting Gemini processing with:")
-       #print(f"       workarea_path: {workarea_path}")
-       #print(f"       workarea_file_name: {workarea_file_name}")
+        if self.gemini_service.debugMode:
+            print(f"AgentService::do_the_magic_with_gemini::starting Gemini processing with:")
+            print(f"AgentService::do_the_magic_with_gemini::workarea_path:      {workarea_path}")
+            print(f"AgentService::do_the_magic_with_gemini::workarea_file_name: {workarea_file_name}")
+
         # No output files generated yet
         output_file_names = []
         ################################################################################################################################
@@ -160,9 +162,10 @@ class AgentService:
             gemini_context = gemini_contexts_for_pandas[0]
             # Apply each pandas verb over input dataframe using the defined Gemini context
             df = pd.read_excel(workarea_file_name)
-            print(f"       {len(pandas_verbs)} to be applied over dataframe of shape {df.shape} and using the following Gemini context:")
-            print(f"       Gemini prompt pattern:     {gemini_context[1]}")
-           #print(f"       Gemini system instruction: {gemini_context[3]}")
+            if self.gemini_service.debugMode:
+                print(f"AgentService::do_the_magic_with_gemini::{len(pandas_verbs)} pandas verbs to be applied over dataframe of shape {df.shape} and using the following Gemini context:")
+                print(f"AgentService::do_the_magic_with_gemini::Gemini prompt pattern:     {gemini_context[1].replace(chr(10), ' ').replace(chr(13), ' ')}")
+               #print(f"AgentService::do_the_magic_with_gemini::Gemini system instruction: {gemini_context[3].replace(chr(10), ' ').replace(chr(13), ' ')}")
             for pandas_verb in pandas_verbs:
                 df = self.apply_pandas_verb(df, pandas_verb, gemini_context)
             # After applying all pandas verbs, save the resulting DataFrame into the same workarea file (overwriting it)
