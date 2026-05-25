@@ -8,6 +8,7 @@ log/
 tmp/
 processing/
 processed/
+assets/testing-scenarios/
 
 # Python specific
 venv/
