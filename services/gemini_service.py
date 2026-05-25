@@ -1,4 +1,5 @@
 # services/gemini_service.py
+import json
 import os
 import google.generativeai as genai
 
@@ -74,3 +75,48 @@ class GeminiService:
                         genai.delete_file(g_file.name)
                     except Exception:
                         pass # Prevent a failure in freeing memory from stopping the main flow
+
+
+
+
+    @staticmethod
+    def sanitize_gemini_generated_python_response(raw_response):
+        """
+        Parse and sanitize Gemini's raw response to extract clean Python code that can be executed, especially when Gemini is asked to generate code in a JSON format or within Markdown code blocks. This function handles various formats in which Gemini might return the code, such as:
+            - Direct code as a string.
+            - JSON object with a "code" field.
+            - Markdown code blocks.
+        Parameters:
+            - raw_response: The original response from Gemini, which may contain the code in various formats.
+        Returns: A clean string containing only the Python code that can be executed.
+        """
+
+        # If it comes as JSON {"code": "..."}, extract the value
+        code = raw_response.strip()
+        try:
+            if code.startswith('{'):
+                data = json.loads(code)
+                if 'code' in data:
+                    code = data['code']
+        except json.JSONDecodeError:
+            # If not valid JSON, continue with the original string
+            pass
+
+        # Remove Markdown code block markers (```python ... ```)
+        # Look for blocks delimited by ```
+        if "```" in code:
+            parts = code.split("```")
+            # If it has ```python at the start, the code is usually in the second segment
+            if len(parts) >= 3:
+                code = parts[1].replace("python", "", 1).strip()
+            else:
+                code = parts[0].strip()
+
+        # Remove any escaped quotes that Gemini might have included (e.g., \"df = ...\" or \'df = ...\')
+        code = code.replace('\\"', '"').replace("\\'", "'")
+        
+        # Remove enclosing quotes that Gemini sometimes includes (e.g., "df = ...")
+        code = code.strip('"').strip("'")
+
+        # Final cleanup of any extraneous whitespace
+        return code.strip()

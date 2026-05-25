@@ -1,4 +1,5 @@
 # services/agent_service.py
+import json
 import os
 import shutil
 import pandas as pd
@@ -9,8 +10,8 @@ import pandas as pd
 class AgentService:
     TIMESTAMP_FORMAT = "%Y.%m.%d-%H-%M-%S"
     WORK_AREA_PROCESSING_FILE_NAME_PATTERN = "brahe-ai-processing-{}.xlsx"  # {} will be replaced with timestamp
-    FORMAT_RULES_SHEET_NAME = "Format, Sort & Filter"
-    AGENT_TUNING_SHEET_NAME = "Agent Tuning"
+    AGENT_VERBS_SHEET_NAME = "Agent"
+    GEMINI_CONTEXTS_SHEET_NAME = "Gemini"
 
 
     def __init__(self, 
@@ -86,43 +87,88 @@ class AgentService:
         general_rules_file_path = os.path.join(self.temp_folder, self.general_rules_file_name)
         if not os.path.exists(general_rules_file_path):
             raise FileNotFoundError(f"General Rules (Excel) file not found at: {general_rules_file_path}")
-        format_rules_df = pd.read_excel(general_rules_file_path, sheet_name=self.FORMAT_RULES_SHEET_NAME)
-        agent_tuning_df = pd.read_excel(general_rules_file_path, sheet_name=self.AGENT_TUNING_SHEET_NAME)
-        return format_rules_df.values.tolist(), agent_tuning_df.values.tolist()
+        agent_verbs_df = pd.read_excel(general_rules_file_path, sheet_name=self.AGENT_VERBS_SHEET_NAME)
+        gemini_contexts_df = pd.read_excel(general_rules_file_path, sheet_name=self.GEMINI_CONTEXTS_SHEET_NAME)
+        return agent_verbs_df.values.tolist(), gemini_contexts_df.values.tolist()
 
 
 
 
-    def do_the_magic_with_gemini(self, workarea_path, workarea_file_name, format_rules, agent_tuning):
+    def apply_pandas_verb(self, df, pandas_verb, gemini_context):
+        """
+        Apply a single Pandas rule to the input Excel file and return the resulting DataFrame.
+        Parameters:
+            - df: The DataFrame to which the rule will be applied.
+            - pandas_verb: The specific Pandas rule (verb) to apply.
+            - gemini_context: The Gemini context to use for the rule, containing the prompt pattern and system instruction.
+        Returns:
+            - The resulting DataFrame after applying the Pandas verb with the Gemini context.
+        """
+        # Apply the pandas_verb via gemini... return the resulting DataFrame after applying the rule.
+        verb_name = pandas_verb[1]
+        human_instruction = pandas_verb[2]
+        gemini_prompt = gemini_context[1].replace("{value}", human_instruction)
+        gemini_system_instruction = gemini_context[3]
+
+        print(f"        ** Invoking Gemini with prompt: \"{gemini_prompt}\"")
+        print(f"           over dataframe with shape {df.shape} with the following columns: {df.columns.tolist()}...")
+        gemini_response = self.gemini_service.gemini(prompt=gemini_prompt, system_instruction=gemini_system_instruction, json_output=True)
+        print(f"           Gemini response:               {gemini_response}")
+        gemini_code_to_execute = self.gemini_service.sanitize_gemini_generated_python_response(gemini_response)
+        print(f"           Gemini code to execute via exec: {gemini_code_to_execute}")
+        print(f"           Applying the resulting pandas code over dataframe...")
+        try:
+            exec_context = { "df": df.copy(), "google_service": self.google_service }
+            compiled_gemini_code_to_execute = compile(gemini_code_to_execute, '<string>', 'exec')
+            exec(compiled_gemini_code_to_execute, {}, exec_context)
+            updated_df = exec_context["df"]
+            print(f"           Resulting dataframe shape after applying verb: {updated_df.shape}; columns: {updated_df.columns.tolist()}")
+            return updated_df
+        except SyntaxError as se:
+            raise SyntaxError(f"Syntax error in Gemini-generated code: {se}\nGenerated code was:\n{gemini_code_to_execute}")
+        except Exception as e:
+            raise RuntimeError(f"Error executing Gemini-generated code: {e}\nGenerated code was:\n{gemini_code_to_execute}")
+
+
+
+
+    def do_the_magic_with_gemini(self, workarea_path, workarea_file_name, agent_verbs, gemini_contexts):
         """
         This is where the core logic of the agent will be implemented, applying Gemini to the input file based on the loaded rules and generating output.
         Parameters:
             - workarea_path: The temporary working directory where the agent can read/write files during processing.
             - workarea_file_name: The name of the file in the working directory that contains the data to be processed.
-            - format_rules: The list of formatting, sorting, and filtering rules loaded from the Excel file.
-            - agent_tuning: The list of agent tuning parameters loaded from the Excel file.
+            - agent_verbs: The list of agent verbs loaded from the Excel file.
+            - gemini_contexts: The list of Gemini contexts loaded from the Excel file.
+        Returns:
+            - A list of output file names generated as a result of applying the agent logic with Gemini. This could include processed Excel files, CSVs, text files, or any other relevant output formats depending on the applied rules and contexts.
         """
-        print("")
-        print("")
-        print("")
-        print("***************************************************************")
-        print("******************** EXECUTING AGENT LOGIC ********************")
-        print("**  Executing agent with the following semantics:")
-        print("**    - Work area path: " + workarea_path)
-        print("**    - Work area file name: " + workarea_file_name)
-        print("**    - Format rules:")
-        for rule in format_rules:
-            print("**        - " + str(rule))
-        print("**    - Agent tuning parameters:")
-        for tuning in agent_tuning:
-            print("**        - " + str(tuning))
-        print("***************************************************************")
-        print("***************************************************************")
-        print("")
-        print("")
-        print("")
-        output_files = []
-        return output_files
+
+        print(f"     Starting Gemini processing with:")
+       #print(f"       workarea_path: {workarea_path}")
+       #print(f"       workarea_file_name: {workarea_file_name}")
+        # No output files generated yet
+        output_file_names = []
+        ################################################################################################################################
+        # Apply pandas verbs... if any
+        pandas_verbs = [verb for verb in agent_verbs if verb[0].lower() == "pandas"]
+        if pandas_verbs:
+            # Ensure there is one and only one Gemini context to apply with the Pandas verb(s)
+            gemini_contexts_for_pandas = [context for context in gemini_contexts if context[0].lower() == "pandas"]
+            if len(gemini_contexts_for_pandas) != 1:
+                raise ValueError("Pandas verbs were found in agent rules but no Gemini pandas context was found. When applying pandas verbs, there must be one AND ONLY one Gemini context for the pandas realm.")
+            gemini_context = gemini_contexts_for_pandas[0]
+            # Apply each pandas verb over input dataframe using the defined Gemini context
+            df = pd.read_excel(workarea_file_name)
+            print(f"       {len(pandas_verbs)} to be applied over dataframe of shape {df.shape} and using the following Gemini context:")
+            print(f"       Gemini prompt pattern:     {gemini_context[1]}")
+           #print(f"       Gemini system instruction: {gemini_context[3]}")
+            for pandas_verb in pandas_verbs:
+                df = self.apply_pandas_verb(df, pandas_verb, gemini_context)
+            # After applying all pandas verbs, save the resulting DataFrame into the same workarea file (overwriting it)
+            df.to_excel(workarea_file_name, index=False)
+        output_file_names.append(workarea_file_name)
+        return output_file_names
 
 
 
@@ -139,7 +185,7 @@ class AgentService:
         
         # Download (and remove in order to avoid double processing) raw_data_report from Google Drive's input folder to the temporary folder
         self.google_service.download_file_by_name(folder_id=self.google_drive_input_folder_id, file_name=self.raw_data_report_input_file_name, dest_folder=paths["temporary_folder"])
-        self.google_service.delete_file_by_name(folder_id=self.google_drive_input_folder_id, file_name=self.raw_data_report_input_file_name)
+        # self.google_service.delete_file_by_name(folder_id=self.google_drive_input_folder_id, file_name=self.raw_data_report_input_file_name)
 
         # Copy downloaded file from temporary folder to the processing folder
         shutil.copy(os.path.join(paths["temporary_folder"], self.raw_data_report_input_file_name), paths["processing_file_name"])
@@ -153,7 +199,7 @@ class AgentService:
         self.google_service.download_file_by_name(folder_id=self.google_drive_rules_folder_id, file_name=self.general_rules_file_name, dest_folder=self.temp_folder)
 
         # Load agent rules from Excel file into structured lists (matrix format) for processing
-        format_rules, agent_tuning = self.load_rules_from_excel()
+        agent_verbs, gemini_contexts = self.load_rules_from_excel()
 
 
 
@@ -164,8 +210,8 @@ class AgentService:
         output_files = self.do_the_magic_with_gemini(
             workarea_path=paths["temporary_folder"],
             workarea_file_name=paths["work_area_processing_file_name"],
-            format_rules=format_rules,
-            agent_tuning=agent_tuning
+            agent_verbs=agent_verbs,
+            gemini_contexts=gemini_contexts
         )
         ################################################################################################################################
         ################################################################################################################################
@@ -183,7 +229,7 @@ class AgentService:
             self.google_service.upload_file(source_file=output_file, folder_id=self.google_drive_output_folder_id, file_name=os.path.basename(output_file)) 
 
         # Remove temporary folder and its content
-        shutil.rmtree(paths["temporary_folder"])
+        #shutil.rmtree(paths["temporary_folder"])
 
         # All done! Agent execution completed successfully.
         return {
