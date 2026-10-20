@@ -118,7 +118,7 @@ pip install google-auth-oauthlib google-api-python-client google-auth-httplib2 g
 # 4. Clean directory structure for the agent
 echo ""
 echo "🛠 Setting up directories..."
-mkdir -p assets     # For static assets (e.g., license, documentation)
+mkdir -p assets     # For static assets and documentation
 mkdir -p log        # For logging automated executions
 mkdir -p tmp        # For temporary files (e.g., downloaded spreadsheets)
 mkdir -p processing # For files currently being processed
@@ -159,24 +159,14 @@ if __name__ == "__main__":
     main()
 EOF
 
-# 6. Create license file (Preserving your terms of Puerto Rico)
-echo "📄 Creating license file..."
-cat > assets/license.txt << 'EOF'
-Proprietary Software License Agreement
-
-Copyright © 2026 Marc Bonet. All rights reserved.
-
-This software and its associated documentation are proprietary products of Marc Bonet and are protected under applicable intellectual property laws of the United States and Puerto Rico. By installing, copying, or otherwise using this software, you agree to be bound by the terms of this license.
-EOF
-
-# 7. Create additional (empty) files for future development
+# 6. Create additional (empty) files for future development
 touch credentials.json
 touch token.json
 touch services/__init__.py
 touch services/google_service.py
 touch services/gemini_service.py
 
-# 8. Create .env file template
+# 7. Create .env file template
 echo "🔐 Creating .env file template..."
 cat << 'EOF' > .env
 # Environment configuration for brahe-ai

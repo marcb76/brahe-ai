@@ -7,7 +7,7 @@
 ## Author & Copyright
 
 **Author:** Marc Bonet  
-**Copyright:** © 2026 Marc Bonet. All rights reserved.
+**Copyright:** © 2026 Marc Bonet.
 
 *This mini-project began as a research and development experiment with the Gemini API. Its broader goal is to explore how configurable AI workflows can help teams prepare recurring spreadsheet data, derive useful summaries, and deliver results through the tools they already use.*
 
@@ -173,12 +173,7 @@ The Windows backup script uses local paths configured in `generateBackupImage.cm
 
 ## License
 
-**Proprietary Software License Agreement**  
-Copyright © 2026 Marc Bonet. All rights reserved.
-
-This software and its associated documentation are proprietary products of Marc Bonet and are protected under applicable intellectual property laws of the United States and Puerto Rico. By installing, copying, or otherwise using this software, you agree to be bound by the terms of the license.
-
-See [`assets/license.txt`](assets/license.txt) for the complete license terms. The repository is not offered under an open-source license.
+This project is licensed under the MIT License. See [`LICENSE`](LICENSE) for the full license text.
 
 ---
 
