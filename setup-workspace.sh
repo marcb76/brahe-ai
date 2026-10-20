@@ -54,6 +54,8 @@ if [ ! -d ".git" ]; then
 credentials.json
 token.json
 README.pdf
+still-to-do.md
+still-to-do.pdf
 
 # Runtime directories
 log/
