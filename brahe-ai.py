@@ -21,10 +21,10 @@ AGENT_NAME = "brahe-ai"
 AGENT_VERSION = "0.0.1"
 AGENT_DESCRIPTION = "AI Agent based on Gemini for meta-information insights based on raw data."
 configuration_service = None  # This will hold the instance of the ConfigService once it's instantiated
-google_service = None  # This will hold the instance of the GoogleService once it's instantiated
-notification_service = None  # This will hold the instance of the NotificationService once it's instantiated
-gemini_service = None  # This will hold the instance of the GeminiService once it's instantiated
-agent_service = None  # This will hold the instance of the AgentService once it's instantiated
+google_service = None         # This will hold the instance of the GoogleService once it's instantiated
+notification_service = None   # This will hold the instance of the NotificationService once it's instantiated
+gemini_service = None         # This will hold the instance of the GeminiService once it's instantiated
+agent_service = None          # This will hold the instance of the AgentService once it's instantiated
 
 
 
