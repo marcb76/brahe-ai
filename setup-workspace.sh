@@ -53,6 +53,7 @@ if [ ! -d ".git" ]; then
 .env
 credentials.json
 token.json
+README.pdf
 
 # Runtime directories
 log/
