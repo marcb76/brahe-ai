@@ -20,7 +20,7 @@ if "%ZIP_FILENAME_MONTH%"=="11" (SET ZIP_FILENAME_MONTH=Nov)
 if "%ZIP_FILENAME_MONTH%"=="12" (SET ZIP_FILENAME_MONTH=Dec)
 set ZIP_FILENAME=brahe-ai.bkp-%ZIP_FILENAME_MONTH%-%ZIP_FILENAME_DAY%-%ZIP_FILENAME_YEAR%.zip
 set ZIP_TEMP_FILENAME=brahe-ai.bkp-%ZIP_FILENAME_MONTH%-%ZIP_FILENAME_DAY%-%ZIP_FILENAME_YEAR%.tmp.zip
-set WORKSPACE_PATH=C:\Users\marcb\OneDrive\Personal Managed\Brahe-ai\brahe-ai-workspace
+set WORKSPACE_PATH=C:\Users\marcb\OneDrive\Desktop\Showcases\brahe-ai
 
 if not exist "%ZIP_UTILITY_PATH%\%ZIP_UTILITY%" (
     echo ERROR: 7-Zip was not found at "%ZIP_UTILITY_PATH%\%ZIP_UTILITY%".
