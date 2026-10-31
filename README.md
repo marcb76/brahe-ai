@@ -7,8 +7,7 @@
 ## Author & Copyright
 
 **Author:** Marc Bonet  
-**Copyright:** © 2026 Marc Bonet.
-
+**Copyright:** © 2026 Marc Bonet.  
 *This mini-project began as a research and development experiment with the Gemini API. Its broader goal is to explore how configurable AI workflows can help teams prepare recurring spreadsheet data, derive useful summaries, and deliver results through the tools they already use.*
 
 ---
@@ -24,6 +23,19 @@ The agent's capabilities are designed to grow with the human-readable verbs defi
 Its longer-term objective is to provide a configurable assistant that can take an operational spreadsheet, apply business-defined transformations, generate useful insights, and deliver the resulting artifacts through Google Drive and Gmail.
 
 _The current repository is an early R&D prototype. It demonstrates the core integration pattern—rules in Excel, code generation with Gemini, spreadsheet processing with pandas, and Google Workspace actions—but **is not a production-ready** automation platform._
+
+---
+
+## Story and Etymology
+
+- **Tycho Brahe** (16th-century astronomer).
+
+Long before computers or advanced telescopes existed, Tycho Brahe spent decades collecting the largest and most precise collection of scattered astronomical data in human history.  
+His data tables were so massive and meticulous that, after his death, Johannes Kepler used them to formulate the laws of planetary motion.  
+https://en.wikipedia.org/wiki/Tycho_Brahe
+
+Brahe AI performs the exact same role for e-commerce: it processes a vast universe of massive, scattered transactional data, enabling store owners to uncover the fundamental laws governing their business sales.  
+**The name is concise, modern, and memorable.**
 
 ---
 
