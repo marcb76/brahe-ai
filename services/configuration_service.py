@@ -44,7 +44,7 @@ class ConfigurationService:
         missing_configs = []
         # Validate key attributes
         for key, value in self.__dict__.items():
-            if not value:
+            if value is None or (isinstance(value, str) and not value.strip()):
                 missing_configs.append(key)
         if missing_configs:
             return missing_configs
