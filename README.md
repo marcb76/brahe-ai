@@ -59,7 +59,7 @@ The sample rules workbook also demonstrates an insight task that asks Gemini-gen
 ```text
 Google Drive input workbook ─┐
                              ├─> AgentService ─> Gemini-generated Python
-Google Drive rules workbook ┘                        │
+Google Drive rules workbook ─┘                       │
                                                      ▼
                                                pandas DataFrame
                                                      │
