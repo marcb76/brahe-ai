@@ -115,6 +115,12 @@ PowerShell:
 .\venv\Scripts\Activate.ps1
 ```
 
+git bash (Windows):
+
+```gitbash
+source venv/Scripts/activate
+```
+
 macOS or Linux:
 
 ```bash
